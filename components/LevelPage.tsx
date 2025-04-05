@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Confetti to avoid SSR issues
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
 
 const LevelContainer = styled.div`
   min-height: 100vh;
@@ -210,6 +214,31 @@ const BackButton = styled.button`
   }
 `;
 
+const NextLevelButton = styled.button<{ visible: boolean }>`
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) ${props => props.visible ? 'translateY(0)' : 'translateY(100px)'};
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #4a90e2 0%, #6ba4e7 100%);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  z-index: 3;
+  opacity: ${props => props.visible ? 1 : 0};
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: linear-gradient(135deg, #6ba4e7 0%, #4a90e2 100%);
+    transform: translateX(-50%) translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+`;
+
 interface LevelData {
   gainItems: Array<{ text: string; timestamp: number }>;
   loseItems: Array<{ text: string; timestamp: number }>;
@@ -222,6 +251,11 @@ const LevelPage = () => {
   const [newLoseText, setNewLoseText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [levelId, setLevelId] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
 
   useEffect(() => {
     // Get level ID from URL
@@ -230,6 +264,17 @@ const LevelPage = () => {
     if (match) {
       setLevelId(match[1]);
     }
+
+    // Handle window resize for confetti
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -321,10 +366,34 @@ const LevelPage = () => {
     }
   };
 
+  const handleNextLevel = () => {
+    setShowConfetti(true);
+    
+    // After confetti animation, navigate to the next level
+    setTimeout(() => {
+      // Navigate to the Confidence page (level 2)
+      router.push('/level/2');
+    }, 5000); // 5 seconds for confetti animation
+  };
+
+  // Check if both columns have at least one item
+  const showNextLevelButton = levelData.gainItems.length > 0 && levelData.loseItems.length > 0;
+
   if (error) return <div>Error: {error}</div>;
 
   return (
     <LevelContainer>
+      {showConfetti && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={500}
+          gravity={0.2}
+          initialVelocityY={20}
+          colors={['#4a90e2', '#6ba4e7', '#ffd700', '#ffffff', '#ff6b6b']}
+        />
+      )}
       <GalaxyBackground />
       <BackButton onClick={() => router.push('/')}>Back to Map</BackButton>
       <ContentContainer>
@@ -377,6 +446,12 @@ const LevelPage = () => {
             </ItemList>
           </Column>
         </ColumnsContainer>
+        <NextLevelButton 
+          visible={showNextLevelButton} 
+          onClick={handleNextLevel}
+        >
+          Next Level
+        </NextLevelButton>
       </ContentContainer>
     </LevelContainer>
   );
