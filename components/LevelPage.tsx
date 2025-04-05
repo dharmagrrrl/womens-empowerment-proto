@@ -217,36 +217,45 @@ interface LevelData {
 
 const LevelPage = () => {
   const router = useRouter();
-  const [gainInput, setGainInput] = useState('');
-  const [loseInput, setLoseInput] = useState('');
   const [levelData, setLevelData] = useState<LevelData>({ gainItems: [], loseItems: [] });
-  const [loading, setLoading] = useState(true);
+  const [newGainText, setNewGainText] = useState('');
+  const [newLoseText, setNewLoseText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [levelId, setLevelId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchLevelData();
+    // Get level ID from URL
+    const path = window.location.pathname;
+    const match = path.match(/\/level\/(\d+)/);
+    if (match) {
+      setLevelId(match[1]);
+    }
   }, []);
+
+  useEffect(() => {
+    if (levelId) {
+      fetchLevelData();
+    }
+  }, [levelId]);
 
   const fetchLevelData = async () => {
     try {
-      const response = await fetch('/api/level/1');
-      if (!response.ok) throw new Error('Failed to fetch level data');
+      const response = await fetch(`/api/level/${levelId}`);
+      if (!response.ok) throw new Error('Failed to load level data');
       const data = await response.json();
       setLevelData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load level data');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleAddGain = async () => {
-    if (!gainInput.trim()) return;
+    if (!newGainText.trim() || !levelId) return;
     try {
-      const response = await fetch('/api/level/1/gain', {
+      const response = await fetch(`/api/level/${levelId}/gain`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: gainInput.trim() }),
+        body: JSON.stringify({ text: newGainText }),
       });
       if (!response.ok) throw new Error('Failed to add gain item');
       const newItem = await response.json();
@@ -254,19 +263,19 @@ const LevelPage = () => {
         ...prev,
         gainItems: [...prev.gainItems, newItem],
       }));
-      setGainInput('');
+      setNewGainText('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add gain item');
     }
   };
 
   const handleAddLose = async () => {
-    if (!loseInput.trim()) return;
+    if (!newLoseText.trim() || !levelId) return;
     try {
-      const response = await fetch('/api/level/1/lose', {
+      const response = await fetch(`/api/level/${levelId}/lose`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: loseInput.trim() }),
+        body: JSON.stringify({ text: newLoseText }),
       });
       if (!response.ok) throw new Error('Failed to add lose item');
       const newItem = await response.json();
@@ -274,15 +283,16 @@ const LevelPage = () => {
         ...prev,
         loseItems: [...prev.loseItems, newItem],
       }));
-      setLoseInput('');
+      setNewLoseText('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add lose item');
     }
   };
 
   const handleDeleteGain = async (timestamp: number) => {
+    if (!levelId) return;
     try {
-      const response = await fetch(`/api/level/1/gain/${timestamp}`, {
+      const response = await fetch(`/api/level/${levelId}/gain/${timestamp}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete gain item');
@@ -296,8 +306,9 @@ const LevelPage = () => {
   };
 
   const handleDeleteLose = async (timestamp: number) => {
+    if (!levelId) return;
     try {
-      const response = await fetch(`/api/level/1/lose/${timestamp}`, {
+      const response = await fetch(`/api/level/${levelId}/lose/${timestamp}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete lose item');
@@ -310,7 +321,6 @@ const LevelPage = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
@@ -330,8 +340,8 @@ const LevelPage = () => {
               <Input
                 type="text"
                 placeholder="What gives you energy?"
-                value={gainInput}
-                onChange={(e) => setGainInput(e.target.value)}
+                value={newGainText}
+                onChange={(e) => setNewGainText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddGain()}
               />
               <AddButton onClick={handleAddGain}>Add</AddButton>
@@ -351,8 +361,8 @@ const LevelPage = () => {
               <Input
                 type="text"
                 placeholder="What drains your energy?"
-                value={loseInput}
-                onChange={(e) => setLoseInput(e.target.value)}
+                value={newLoseText}
+                onChange={(e) => setNewLoseText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddLose()}
               />
               <AddButton onClick={handleAddLose}>Add</AddButton>
