@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 
@@ -83,57 +83,113 @@ const LevelGrid = styled.div`
   margin: 0 auto;
 `;
 
-const LevelButton = styled.button<{ active: boolean }>`
-  background: ${props => props.active ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'};
-  border: 2px solid ${props => props.active ? '#ffd700' : 'rgba(255, 255, 255, 0.3)'};
-  border-radius: 15px;
-  padding: 2rem;
-  color: white;
+const LevelButton = styled.button<{ active: boolean; current: boolean }>`
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: ${props => props.active 
+    ? 'linear-gradient(135deg, #4a90e2 0%, #6ba4e7 100%)'
+    : 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)'};
+  border: ${props => props.current 
+    ? '4px solid #ffd700'
+    : props.active 
+      ? '4px solid rgba(255, 255, 255, 0.3)'
+      : '4px solid rgba(255, 255, 255, 0.1)'};
+  color: ${props => props.active ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'};
   font-size: 1.5rem;
+  font-family: 'Nunito', sans-serif;
   cursor: ${props => props.active ? 'pointer' : 'not-allowed'};
   transition: all 0.3s ease;
-  font-family: 'Nunito', sans-serif;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: ${props => props.current 
+    ? '0 0 20px rgba(255, 215, 0, 0.5)'
+    : props.active 
+      ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+      : '0 4px 16px rgba(0, 0, 0, 0.2)'};
 
   &:hover {
     transform: ${props => props.active ? 'translateY(-5px)' : 'none'};
-    box-shadow: ${props => props.active ? '0 12px 40px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.3)'};
   }
 
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
-  }
-
-  &:hover::before {
-    transform: translateX(100%);
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: ${props => props.active 
+      ? props.current 
+        ? '#ffd700'
+        : '#4caf50'
+      : '#95a5a6'};
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 `;
 
+const LevelStatus = styled.div<{ active: boolean }>`
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: ${props => props.active ? '#4caf50' : '#95a5a6'};
+  font-weight: 600;
+`;
+
+const LockIcon = styled.div`
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 0.5rem;
+  pointer-events: none;
+`;
+
+interface Level {
+  id: number;
+  name: string;
+  active: boolean;
+}
+
 const MapPage = () => {
   const router = useRouter();
-  const levels = [
+  const [currentLevel, setCurrentLevel] = useState<number>(1);
+  const [levels, setLevels] = useState<Level[]>([
     { id: 1, name: 'Energy', active: true },
     { id: 2, name: 'Confidence', active: false },
     { id: 3, name: 'Focus', active: false },
     { id: 4, name: 'Balance', active: false },
     { id: 5, name: 'Self-Esteem', active: false },
     { id: 6, name: 'Strength', active: false },
-  ];
+  ]);
   
   const [levelPositions, setLevelPositions] = React.useState<Array<{x: number, y: number}>>([]);
   const levelRefs = React.useRef<Array<HTMLButtonElement | null>>(Array(levels.length).fill(null));
+
+  useEffect(() => {
+    // Fetch user's progress from the API
+    const fetchProgress = async () => {
+      try {
+        const response = await fetch('/api/progress');
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentLevel(data.currentLevel);
+          
+          // Update levels based on current progress
+          setLevels(prev => prev.map(level => ({
+            ...level,
+            active: level.id <= data.currentLevel
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to fetch progress:', error);
+      }
+    };
+
+    fetchProgress();
+  }, []);
   
   React.useEffect(() => {
     // Update positions when component mounts or window resizes
@@ -159,7 +215,6 @@ const MapPage = () => {
     };
   }, []);
   
-  // Generate path data for connecting levels
   const generatePathData = () => {
     if (levelPositions.length < 2) return '';
     
@@ -169,16 +224,11 @@ const MapPage = () => {
       const prev = levelPositions[i-1];
       const curr = levelPositions[i];
       
-      // Calculate distance between points
       const dx = curr.x - prev.x;
       const dy = curr.y - prev.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Create a more interesting path with varying curves
-      // For horizontal connections, add vertical curves
-      // For vertical connections, add horizontal curves
       if (Math.abs(dx) > Math.abs(dy)) {
-        // More horizontal connection
         const midY = prev.y + (Math.random() * 0.4 - 0.2) * distance;
         const controlX1 = prev.x + distance * 0.25;
         const controlY1 = midY;
@@ -187,7 +237,6 @@ const MapPage = () => {
         
         pathData += ` C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${curr.x} ${curr.y}`;
       } else {
-        // More vertical connection
         const midX = prev.x + (Math.random() * 0.4 - 0.2) * distance;
         const controlX1 = midX;
         const controlY1 = prev.y + distance * 0.25;
@@ -201,7 +250,7 @@ const MapPage = () => {
     return pathData;
   };
 
-  const handleLevelClick = (level: { id: number; name: string; active: boolean }) => {
+  const handleLevelClick = (level: Level) => {
     if (level.active) {
       router.push(`/level/${level.id}`);
     }
@@ -227,6 +276,7 @@ const MapPage = () => {
             key={level.id}
             ref={el => { levelRefs.current[index] = el; }}
             active={level.active}
+            current={level.id === currentLevel}
             onClick={() => handleLevelClick(level)}
             style={{
               gridColumn: index % 3 + 1,
@@ -234,6 +284,14 @@ const MapPage = () => {
             }}
           >
             {level.name}
+            <LevelStatus active={level.active}>
+              {level.active 
+                ? level.id === currentLevel 
+                  ? 'Current Level'
+                  : 'Unlocked'
+                : 'Locked'}
+            </LevelStatus>
+            {!level.active && <LockIcon>🔒</LockIcon>}
           </LevelButton>
         ))}
       </LevelGrid>
