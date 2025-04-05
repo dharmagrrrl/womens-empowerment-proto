@@ -24,177 +24,101 @@ const MapTitle = styled.h1`
   text-align: center;
 `;
 
-const RoadContainer = styled.div`
-  position: relative;
-  width: 100%;
-  height: 200px;
-  margin: 2rem 0;
-  overflow: hidden;
-`;
-
-const RainbowContainer = styled.div`
+const PathContainer = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-`;
-
-const Rainbow = styled.div`
-  position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 50% 50% 0 0;
-  background: linear-gradient(
-    to bottom,
-    #ff0000 0%,
-    #ff7f00 16.66%,
-    #ffff00 33.33%,
-    #00ff00 50%,
-    #0000ff 66.66%,
-    #4b0082 83.33%,
-    #8f00ff 100%
-  );
-  opacity: 0.8;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-  animation: rainbowGlow 3s ease-in-out infinite;
-  transform: scale(3, 1.5);
-  transform-origin: bottom center;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, transparent 50%, #1a472a 51%);
-    border-radius: 50% 50% 0 0;
-    transform: scale(3, 1.5);
-    transform-origin: bottom center;
-  }
-
-  @keyframes rainbowGlow {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 1; }
-  }
-`;
-
-const Sparkle = styled.div`
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-  animation: sparkle 1.5s ease-in-out infinite;
-  opacity: 0;
-
-  @keyframes sparkle {
-    0%, 100% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1); opacity: 1; }
-  }
-`;
-
-const YellowBrickRoad = styled.div`
-  position: absolute;
-  background: linear-gradient(90deg, #ffd700 0%, #ffeb3b 50%, #ffd700 100%);
-  width: 40px;
-  height: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 20px;
-  opacity: 0.8;
   z-index: 1;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 10px,
-      rgba(0, 0, 0, 0.1) 10px,
-      rgba(0, 0, 0, 0.1) 20px
-    );
-  }
+  pointer-events: none;
 `;
 
-const LevelRow = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const PathSVG = styled.svg`
+  position: absolute;
   width: 100%;
+  height: 100%;
+  overflow: visible;
+`;
+
+const BrickPattern = styled.pattern`
+  patternUnits: userSpaceOnUse;
+  width: 40px;
+  height: 20px;
+  patternTransform: rotate(0);
+`;
+
+const BrickRect = styled.rect`
+  width: 40px;
+  height: 20px;
+  fill: #ffd700;
+  stroke: #ffc800;
+  stroke-width: 1;
+`;
+
+const PathElement = styled.path`
+  stroke: #ffd700;
+  stroke-width: 30;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+`;
+
+const GlowEffect = styled.path`
+  stroke: rgba(255, 215, 0, 0.3);
+  stroke-width: 40;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: blur(10px);
+`;
+
+const LevelGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  padding: 4rem 2rem;
   position: relative;
   z-index: 2;
-  margin: 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
-const LevelCard = styled.div<{ active: boolean }>`
-  background: ${props => props.active ? 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)' : 'linear-gradient(135deg, #4a4a4a 0%, #666666 100%)'};
-  border-radius: 20px;
-  padding: 2.5rem;
-  text-align: center;
+const LevelButton = styled.button<{ active: boolean }>`
+  background: ${props => props.active ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'};
+  border: 2px solid ${props => props.active ? '#ffd700' : 'rgba(255, 255, 255, 0.3)'};
+  border-radius: 15px;
+  padding: 2rem;
+  color: white;
+  font-size: 1.5rem;
   cursor: ${props => props.active ? 'pointer' : 'not-allowed'};
-  opacity: ${props => props.active ? 1 : 0.5};
   transition: all 0.3s ease;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  width: 280px;
-  margin: 0 1rem;
+  font-family: 'Nunito', sans-serif;
   position: relative;
-  border: 3px solid ${props => props.active ? '#ffd700' : 'transparent'};
-  transform: ${props => props.active ? 'scale(1)' : 'scale(0.95)'};
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin: 1rem;
 
   &:hover {
-    transform: ${props => props.active ? 'scale(1.05) translateY(-5px)' : 'scale(0.95)'};
-    box-shadow: ${props => props.active ? '0 12px 24px rgba(0, 0, 0, 0.3)' : '0 8px 16px rgba(0, 0, 0, 0.2)'};
+    transform: ${props => props.active ? 'translateY(-5px)' : 'none'};
+    box-shadow: ${props => props.active ? '0 12px 40px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.3)'};
   }
 
   &::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: -20px;
-    width: 20px;
-    height: 2px;
-    background-color: ${props => props.active ? '#ffd700' : '#666666'};
-    opacity: 0.5;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -20px;
-    width: 20px;
-    height: 2px;
-    background-color: ${props => props.active ? '#ffd700' : '#666666'};
-    opacity: 0.5;
+  &:hover::before {
+    transform: translateX(100%);
   }
-`;
-
-const LevelNumber = styled.h2`
-  color: #ffffff;
-  margin: 0;
-  font-size: 1.8rem;
-  line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-`;
-
-const LevelStatus = styled.p`
-  color: #ffffff;
-  margin: 0.8rem 0 0;
-  font-size: 1rem;
-  font-weight: 400;
-  opacity: 0.9;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 `;
 
 const MapPage = () => {
@@ -207,6 +131,75 @@ const MapPage = () => {
     { id: 5, name: 'Self-Esteem', active: false },
     { id: 6, name: 'Strength', active: false },
   ];
+  
+  const [levelPositions, setLevelPositions] = React.useState<Array<{x: number, y: number}>>([]);
+  const levelRefs = React.useRef<Array<HTMLButtonElement | null>>(Array(levels.length).fill(null));
+  
+  React.useEffect(() => {
+    // Update positions when component mounts or window resizes
+    const updatePositions = () => {
+      const positions = levelRefs.current.map(ref => {
+        if (ref) {
+          const rect = ref.getBoundingClientRect();
+          return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+          };
+        }
+        return { x: 0, y: 0 };
+      });
+      setLevelPositions(positions);
+    };
+    
+    updatePositions();
+    window.addEventListener('resize', updatePositions);
+    
+    return () => {
+      window.removeEventListener('resize', updatePositions);
+    };
+  }, []);
+  
+  // Generate path data for connecting levels
+  const generatePathData = () => {
+    if (levelPositions.length < 2) return '';
+    
+    let pathData = `M ${levelPositions[0].x} ${levelPositions[0].y}`;
+    
+    for (let i = 1; i < levelPositions.length; i++) {
+      const prev = levelPositions[i-1];
+      const curr = levelPositions[i];
+      
+      // Calculate distance between points
+      const dx = curr.x - prev.x;
+      const dy = curr.y - prev.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Create a more interesting path with varying curves
+      // For horizontal connections, add vertical curves
+      // For vertical connections, add horizontal curves
+      if (Math.abs(dx) > Math.abs(dy)) {
+        // More horizontal connection
+        const midY = prev.y + (Math.random() * 0.4 - 0.2) * distance;
+        const controlX1 = prev.x + distance * 0.25;
+        const controlY1 = midY;
+        const controlX2 = curr.x - distance * 0.25;
+        const controlY2 = midY;
+        
+        pathData += ` C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${curr.x} ${curr.y}`;
+      } else {
+        // More vertical connection
+        const midX = prev.x + (Math.random() * 0.4 - 0.2) * distance;
+        const controlX1 = midX;
+        const controlY1 = prev.y + distance * 0.25;
+        const controlX2 = midX;
+        const controlY2 = curr.y - distance * 0.25;
+        
+        pathData += ` C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${curr.x} ${curr.y}`;
+      }
+    }
+    
+    return pathData;
+  };
 
   const handleLevelClick = (level: { id: number; name: string; active: boolean }) => {
     if (level.active) {
@@ -217,72 +210,33 @@ const MapPage = () => {
   return (
     <MapContainer>
       <MapTitle>EmpowerU</MapTitle>
-      <RoadContainer>
-        <YellowBrickRoad />
-        <RainbowContainer>
-          <Rainbow />
-          {[...Array(12)].map((_, i) => (
-            <Sparkle
-              key={i}
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-              }}
-            />
-          ))}
-        </RainbowContainer>
-      </RoadContainer>
-      <LevelRow>
-        <LevelCard
-          active={levels[0].active}
-          onClick={() => handleLevelClick(levels[0])}
-        >
-          <LevelNumber>{levels[0].name}</LevelNumber>
-          <LevelStatus>{levels[0].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-      </LevelRow>
-      <LevelRow>
-        <LevelCard
-          active={levels[1].active}
-          onClick={() => handleLevelClick(levels[1])}
-        >
-          <LevelNumber>{levels[1].name}</LevelNumber>
-          <LevelStatus>{levels[1].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-        <LevelCard
-          active={levels[2].active}
-          onClick={() => handleLevelClick(levels[2])}
-        >
-          <LevelNumber>{levels[2].name}</LevelNumber>
-          <LevelStatus>{levels[2].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-      </LevelRow>
-      <LevelRow>
-        <LevelCard
-          active={levels[3].active}
-          onClick={() => handleLevelClick(levels[3])}
-        >
-          <LevelNumber>{levels[3].name}</LevelNumber>
-          <LevelStatus>{levels[3].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-        <LevelCard
-          active={levels[4].active}
-          onClick={() => handleLevelClick(levels[4])}
-        >
-          <LevelNumber>{levels[4].name}</LevelNumber>
-          <LevelStatus>{levels[4].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-      </LevelRow>
-      <LevelRow>
-        <LevelCard
-          active={levels[5].active}
-          onClick={() => handleLevelClick(levels[5])}
-        >
-          <LevelNumber>{levels[5].name}</LevelNumber>
-          <LevelStatus>{levels[5].active ? 'Available' : 'Locked'}</LevelStatus>
-        </LevelCard>
-      </LevelRow>
+      <PathContainer>
+        <PathSVG>
+          <defs>
+            <BrickPattern id="brickPattern">
+              <BrickRect />
+            </BrickPattern>
+          </defs>
+          <GlowEffect d={generatePathData()} />
+          <PathElement d={generatePathData()} />
+        </PathSVG>
+      </PathContainer>
+      <LevelGrid>
+        {levels.map((level, index) => (
+          <LevelButton
+            key={level.id}
+            ref={el => { levelRefs.current[index] = el; }}
+            active={level.active}
+            onClick={() => handleLevelClick(level)}
+            style={{
+              gridColumn: index % 3 + 1,
+              gridRow: Math.floor(index / 3) + 1,
+            }}
+          >
+            {level.name}
+          </LevelButton>
+        ))}
+      </LevelGrid>
     </MapContainer>
   );
 };
