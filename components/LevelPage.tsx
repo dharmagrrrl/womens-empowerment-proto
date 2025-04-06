@@ -379,6 +379,16 @@ const LevelPage = () => {
   const handleNextLevel = () => {
     setShowConfetti(true);
     
+    // Update progress to the next level before navigating
+    const nextLevel = parseInt(levelId || '1') + 1;
+    fetch('/api/progress', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ level: nextLevel }),
+    }).catch(console.error);
+    
     // After confetti animation, navigate to the next level
     setTimeout(() => {
       // Navigate to the Confidence page (level 2)

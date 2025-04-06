@@ -168,28 +168,29 @@ const MapPage = () => {
   const [levelPositions, setLevelPositions] = React.useState<Array<{x: number, y: number}>>([]);
   const levelRefs = React.useRef<Array<HTMLButtonElement | null>>(Array(levels.length).fill(null));
 
+  // Fetch progress data when component mounts
   useEffect(() => {
-    // Fetch user's progress from the API
-    const fetchProgress = async () => {
-      try {
-        const response = await fetch('/api/progress');
-        if (response.ok) {
-          const data = await response.json();
-          setCurrentLevel(data.currentLevel);
-          
-          // Update levels based on current progress
-          setLevels(prev => prev.map(level => ({
-            ...level,
-            active: level.id <= data.currentLevel
-          })));
-        }
-      } catch (error) {
-        console.error('Failed to fetch progress:', error);
-      }
-    };
-
     fetchProgress();
   }, []);
+
+  // Function to fetch progress data
+  const fetchProgress = async () => {
+    try {
+      const response = await fetch('/api/progress');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentLevel(data.currentLevel);
+        
+        // Update levels based on current progress
+        setLevels(prev => prev.map(level => ({
+          ...level,
+          active: level.id <= data.currentLevel
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to fetch progress:', error);
+    }
+  };
   
   React.useEffect(() => {
     // Update positions when component mounts or window resizes

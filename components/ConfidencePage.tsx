@@ -255,8 +255,17 @@ const ConfidencePage = () => {
     const path = window.location.pathname;
     const match = path.match(/\/level\/(\d+)/);
     if (match) {
-      setLevelId(match[1]);
-      console.log("Confidence page loaded with level ID:", match[1]);
+      const id = match[1];
+      setLevelId(id);
+      
+      // Update progress when entering a new level
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ level: parseInt(id) }),
+      }).catch(console.error);
     }
   }, []);
 
