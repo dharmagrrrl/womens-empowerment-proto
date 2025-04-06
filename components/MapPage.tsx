@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
+import ResetProgressButton from './ResetProgressButton';
 
 const MapContainer = styled.div`
   min-height: 100vh;
@@ -296,6 +297,7 @@ const MapPage = () => {
           </LevelButton>
         ))}
       </LevelGrid>
+      <ResetProgressButton />
     </MapContainer>
   );
 };
